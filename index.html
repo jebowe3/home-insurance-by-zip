@@ -108,7 +108,90 @@
       z-index: 1;
       line-height: 18px;
       color: black;
-    }    
+    }
+
+    /* conditions for smaller screens */
+    @media only screen and (max-width: 600px) {
+      
+      #map {
+        top: 0;
+        bottom: 0;
+        width: 100%;
+      }
+
+      .session {
+        position: absolute;
+        z-index: 1;
+        background-color: rgba(255, 255, 255, 0.75);
+        border-radius: 3px;
+        box-shadow: 0px 0px 0px 2px rgba(0, 0, 0, 0.1);
+        top: 10px;
+        left: 10px;
+        padding: 5px;
+        width: 130px;
+      }
+
+      h1 {
+        font-size: 12px;
+        font-family: 'Lato', sans-serif;
+        padding-bottom: 0px;
+        padding-top: 0px;
+        font-weight: normal;
+      }
+
+      h2 {
+        cursor: pointer;
+        font-size: 10px;
+        font-family: 'Lato', sans-serif;
+        padding-bottom: 0px;
+        padding-top: 0px;
+        font-weight: normal;
+        width: 50%;
+        text-align: left;
+        display: table-cell;
+      }
+
+      #slider {
+        cursor: pointer;
+        width: 125px;
+      }
+
+      #layerbar {
+        position: absolute;
+        z-index: 1;
+        background-color: rgba(255, 255, 255, 0.75);
+        border-radius: 3px;
+        box-shadow: 0px 0px 0px 2px rgba(0, 0, 0, 0.1);
+        top: 10px;
+        right: 50px;
+        padding: 5px;
+        width: 150px;
+        white-space: nowrap;
+      }
+
+      #layerbar select {
+        margin: 0;
+        font-family: 'Lato', sans-serif;
+        font-size: 10px;
+        width: 100%;
+      }
+
+      #legend {
+        background-color: rgba(255, 255, 255, 0.75);
+        border-radius: 3px;
+        bottom: 40px;
+        width: auto;
+        box-shadow: 0px 0px 0px 2px rgba(0, 0, 0, 0.1);
+        font: 12px/15px 'Lato', 'Lato', 'Lato', sans-serif;
+        padding: 10;
+        position: absolute;
+        right: 10px;
+        z-index: 1;
+        line-height: 18px;
+        color: black;
+      }
+    }
+
   </style>
 
 </head>
@@ -135,9 +218,9 @@
     <div class='dropdown' id='layerbar'>
         <h1>Select Layer</h1>
         <select id='layer-select'>
-        <option value='Nonrenewal'>Nonrenewal</option>
-        <option value='Nonpayment_Cancellation'>Nonpayment Cancellation</option>
-        <option value='Other_Than_Nonpayment_Cancellation'>Other Than Nonpayment Cancellation</option>
+          <option class="dropval" value='Nonrenewal'>Nonrenewal</option>
+          <option class="dropval" value='Nonpayment_Cancellation'>Nonpayment Cancellation</option>
+          <option class="dropval" value='Other_Than_Nonpayment_Cancellation'>Other Than Nonpayment Cancellation</option>
         </select>
     </div>    
   </div>
@@ -163,7 +246,8 @@
       zoom: 1,
       minZoom: 0,
       maxZoom: 15,
-      style: 'https://api.maptiler.com/maps/f419d8c0-4c62-4a35-8529-a84acc4db558/style.json?key=X79IRuovndFj8moKWjAt'
+      style: 'https://api.maptiler.com/maps/f419d8c0-4c62-4a35-8529-a84acc4db558/style.json?key=Dfms4HdTdX0r4gExYDnw'
+      //style: 'https://api.maptiler.com/maps/f419d8c0-4c62-4a35-8529-a84acc4db558/style.json?key=X79IRuovndFj8moKWjAt'
     });
 
     // fit the map to the United States
@@ -223,6 +307,18 @@
 
     // on map load...
     map.on('load', () => {
+
+      const layers = map.getStyle().layers;
+      // Find the index of the first symbol layer in the map style
+      let firstSymbolId;
+      for (const layer of layers) {
+        if (layer.type === 'symbol') {
+          firstSymbolId = layer.id;
+          break;
+        }
+      }
+
+
       let popup = new maplibregl.Popup({
         closeButton: false,
         closeOnClick: false
@@ -272,7 +368,7 @@
             0.5 // Default opacity is 0.5
           ]
         }
-      });
+      }, firstSymbolId);
 
       // add the border layer (polygon borders)
       map.addLayer({
@@ -372,7 +468,7 @@
         if (props[initialLayer] === -1) {
           rate = 'No Data';
         } else {
-          rate = props[initialLayer];
+          rate = props[initialLayer] + '%';
         }
         // set the popup location and content
         popup.setLngLat(e.lngLat)
@@ -403,6 +499,7 @@
       initialYear = slider.value;
       initialLayer = `${initialYear}_${dropdownValue}_Rate`; // update the initialLayer value
       updateLayerStyle(); // update the layer style based on new values
+      document.getElementById('active-year').textContent = initialYear; // update the active year label
     });
 
     layerSelect.addEventListener('change', () => {
@@ -414,11 +511,11 @@
       // Add the legend
       const legend = document.getElementById('legend');
       const colors = ['#fef0d9', '#fdcc8a', '#fc8d59', '#e34a33', '#b30000'];
-      const labels = ['0-0.43', '0.44-0.95', '0.96-1.38', '1.39-2.07', '2.08-20.69'];
+      const labels = ['0%-0.43%', '0.44%-0.95%', '0.96%-1.38%', '1.39%-2.07%', '2.08%-20.69%'];
       const legendTitle = document.createElement('label');
       legendTitle.style.fontWeight = 'bold';
       legendTitle.style.margin = '0 0 5px';
-      legendTitle.textContent = 'Rates per 100 Households';
+      legendTitle.textContent = 'Rate';
       legend.appendChild(legendTitle);
       for (let i = 0; i < colors.length; i++) {
         const div = document.createElement('div');
